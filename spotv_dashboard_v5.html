@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPOTV CEO Dashboard v5</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sw:210px;
+  --nav:#16161a;--nav-t:rgba(255,255,255,0.45);
+  --acc:#6C5CE7;--acc-bg:rgba(108,92,231,0.12);
+  --bg:#f5f5f2;--sur:#fff;--bdr:rgba(0,0,0,0.08);
+  --tx:#1a1a1a;--mt:#888884;--ht:#b0aea8;
+  --up:#16a34a;--dn:#dc2626;--wn:#b45309;
+  --up-bg:#f0fdf4;--dn-bg:#fef2f2;--wn-bg:#fffbeb;
+  --bc:#0F6E56;--bc-l:#E1F5EE;
+  --dg:#185FA5;--dg-l:#E6F1FB;
+}
+body{font-family:'Noto Sans KR',sans-serif;font-size:13px;background:var(--bg);color:var(--tx);display:flex;height:100vh;overflow:hidden}
+.sb{width:var(--sw);flex-shrink:0;background:var(--nav);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:9px}
+.sb-mk{width:28px;height:28px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.sb-nm{font-size:13px;font-weight:600;color:#fff}
+.sb-sb{font-size:10px;color:var(--nav-t);margin-top:1px}
+.sb-sec{padding:14px 16px 4px;font-size:9px;font-weight:600;letter-spacing:.8px;color:rgba(255,255,255,0.22);text-transform:uppercase}
+.nav-i{display:flex;align-items:center;gap:9px;padding:9px 12px;margin:1px 8px;border-radius:8px;cursor:pointer;color:var(--nav-t);font-size:12.5px;transition:all .1s;position:relative}
+.nav-i:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8)}
+.nav-i.on{background:var(--acc-bg);color:#fff}
+.nav-i.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--acc);border-radius:0 2px 2px 0}
+.nd{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.18);flex-shrink:0}
+.nav-i.on .nd{background:var(--acc)}
+.nb{margin-left:auto;background:var(--acc);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-bot{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,0.06)}
+.sb-today{background:rgba(255,255,255,0.05);border-radius:8px;padding:10px 12px}
+.sb-today .l{font-size:9px;color:var(--nav-t);margin-bottom:2px}
+.sb-today .v{font-size:19px;font-weight:600;color:#fff;line-height:1}
+.sb-today .d{font-size:10px;color:var(--nav-t);margin-top:3px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:50px;padding:0 24px;background:var(--sur);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.pg-t{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.tb-r{display:flex;align-items:center;gap:10px}
+.tb-st{font-size:11px;color:var(--mt)}
+.tb-btn{font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid var(--bdr);background:none;cursor:pointer;color:var(--mt);font-family:inherit;transition:background .1s}
+.tb-btn:hover{background:var(--bg)}
+.content{flex:1;overflow-y:auto;padding:20px 24px 40px}
+.sec{display:none}.sec.on{display:block}
+.load-box{display:flex;align-items:center;justify-content:center;padding:60px 20px;flex-direction:column;gap:12px}
+.sp-lg{width:28px;height:28px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-t{font-size:13px;color:var(--mt)}
+.err-box{background:var(--dn-bg);border:1px solid #fecaca;border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:12px;color:var(--dn);line-height:1.6}
+.err-box strong{font-weight:600;display:block;margin-bottom:4px}
+.debug-box{background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:11px;color:#1e40af;font-family:monospace;line-height:1.8;white-space:pre-wrap;word-break:break-all}
+.alerts{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.alert{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:8px;font-size:12px;border-left:3px solid transparent}
+.al-w{background:var(--wn-bg);border-color:#f59e0b;color:#92400e}
+.al-g{background:var(--up-bg);border-color:#22c55e;color:#166534}
+.al-i{background:#eff6ff;border-color:#3b82f6;color:#1e40af}
+.alert strong{font-weight:600}
+.al-tm{margin-left:auto;font-size:10px;opacity:.7;flex-shrink:0;padding-top:1px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:15px}
+.kpi-l{font-size:11px;color:var(--mt);margin-bottom:7px}
+.kpi-v{font-size:24px;font-weight:600;letter-spacing:-1px;line-height:1}
+.kpi-d{font-size:11px;margin-top:5px}
+.kpi-d.up{color:var(--up)}.kpi-d.dn{color:var(--dn)}.kpi-d.wn{color:var(--wn)}
+.kpi-bar{height:4px;background:var(--bdr);border-radius:2px;overflow:hidden;margin-top:8px}
+.kpi-fill{height:4px;border-radius:2px;transition:width .8s}
+.f-ac{background:var(--acc)}.f-g{background:var(--up)}.f-w{background:#f59e0b}.f-r{background:var(--dn)}
+.f-bc{background:var(--bc)}.f-dg{background:var(--dg)}
+.two-col{display:grid;grid-template-columns:3fr 2fr;gap:10px;margin-bottom:14px}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:15px;margin-bottom:14px}
+.card:last-child{margin-bottom:0}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.card-t{font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.5px}
+.sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.ad-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.split-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:15px}
+.split-card.bc-card{border-top:3px solid var(--bc)}
+.split-card.dg-card{border-top:3px solid var(--dg)}
+.split-title{font-size:12px;font-weight:600;margin-bottom:12px}
+.split-kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.sk{background:var(--bg);border-radius:8px;padding:10px}
+.sk-l{font-size:10px;color:var(--mt);margin-bottom:4px}
+.sk-v{font-size:16px;font-weight:600;letter-spacing:-.5px}
+.cum-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:15px;margin-bottom:14px;border-top:3px solid var(--acc)}
+.cum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.ck{text-align:center;padding:12px 8px;background:var(--bg);border-radius:8px}
+.ck-l{font-size:10px;color:var(--mt);margin-bottom:5px}
+.ck-v{font-size:20px;font-weight:600;letter-spacing:-.5px}
+.ck-s{font-size:11px;color:var(--mt);margin-top:3px}
+.prog-wrap{margin-top:14px}
+.prog-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
+.prog-bar{height:8px;background:var(--bdr);border-radius:4px;overflow:hidden;display:flex}
+.prog-fill{height:8px;transition:width .8s}
+.prog-bar-sm{height:4px;background:var(--bdr);border-radius:2px;overflow:hidden;margin-top:8px}
+.prog-fill-sm{height:4px;border-radius:2px;transition:width .8s}
+.mtg-list{display:flex;flex-direction:column}
+.mtg-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:12px}
+.mtg-row:last-child{border-bottom:none}
+.mtg-co{font-weight:500;min-width:76px;flex-shrink:0}
+.mtg-desc{color:var(--mt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;flex-shrink:0}
+.b-done{background:#dcfce7;color:#166634}.b-prog{background:#dbeafe;color:#1d4ed8}
+.b-pend{background:#fef9c3;color:#854d0e}.b-miss{background:#fee2e2;color:#991b1b}
+.b-canc{background:#f3f4f6;color:#374151}
+.b-bc{background:var(--bc-l);color:var(--bc)}.b-dg{background:var(--dg-l);color:var(--dg)}
+.b-log{background:#e0f2fe;color:#075985}.b-meet{background:#fce7f3;color:#831843}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{background:var(--bg);padding:7px 10px;text-align:left;font-weight:500;font-size:11px;color:var(--mt);border-bottom:1px solid var(--bdr)}
+.tbl td{padding:7px 10px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl-wrap{overflow-x:auto}
+.td-r{text-align:right}.td-c{text-align:center}
+.log-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:border-color .12s}
+.log-card:hover{border-color:rgba(108,92,231,.35)}
+.log-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+.log-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.log-dept{font-size:10px;font-weight:600;background:var(--acc-bg);color:var(--acc);padding:2px 8px;border-radius:10px}
+.log-date{font-size:10px;color:var(--mt)}
+.log-author{font-size:10px;color:var(--ht)}
+.log-title{font-size:13px;font-weight:600;margin-bottom:6px;cursor:pointer}
+.log-title:hover{color:var(--acc)}
+.sum-box{background:var(--acc-bg);border-left:3px solid var(--acc);border-radius:0 8px 8px 0;padding:10px 13px;font-size:12px;line-height:1.8;color:var(--tx);margin-bottom:8px}
+.sum-box-label{font-size:10px;font-weight:600;color:var(--acc);margin-bottom:5px}
+.sum-empty{font-size:11px;color:var(--ht);padding:6px 0;font-style:italic}
+.log-full{font-size:12px;color:var(--mt);line-height:1.7;white-space:pre-wrap;border-top:1px solid var(--bdr);padding-top:10px;margin-top:4px;display:none}
+.log-full.open{display:block}
+.log-foot{display:flex;align-items:center;justify-content:flex-end;margin-top:8px}
+.tog-btn{font-size:11px;color:var(--mt);cursor:pointer;padding:3px 10px;border-radius:6px;border:1px solid var(--bdr);background:none;font-family:inherit;transition:background .1s}
+.tog-btn:hover{background:var(--bg)}
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:11px;color:var(--mt)}
+.filter-btn{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bdr);background:none;cursor:pointer;color:var(--mt);font-family:inherit;transition:all .1s}
+.filter-btn.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.filter-btn:hover:not(.on){background:var(--bg)}
+@media(max-width:900px){.kpi-grid,.ad-split,.cum-row{grid-template-columns:repeat(2,1fr)}.two-col,.sub-grid{grid-template-columns:1fr}}
+@media(max-width:600px){:root{--sw:0px}.sb{display:none}.kpi-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="sb">
+  <div class="sb-logo"><div class="sb-mk">S</div><div><div class="sb-nm">SPOTV</div><div class="sb-sb">CEO Dashboard</div></div></div>
+  <div class="sb-sec">Overview</div>
+  <div class="nav-i on" onclick="nav(this,'home')"><span class="nd"></span>오늘 현황</div>
+  <div class="sb-sec">서비스</div>
+  <div class="nav-i" onclick="nav(this,'now')"><span class="nd"></span>NOW 구독자</div>
+  <div class="nav-i" onclick="nav(this,'prime')"><span class="nd"></span>Prime 구독자</div>
+  <div class="sb-sec">광고</div>
+  <div class="nav-i" onclick="nav(this,'ad')"><span class="nd"></span>광고센터 KPI</div>
+  <div class="sb-sec">운영</div>
+  <div class="nav-i" onclick="nav(this,'log')"><span class="nd"></span>업무일지·회의록<span class="nb" id="log-badge">-</span></div>
+  <div class="sb-bot">
+    <div class="sb-today">
+      <div class="l">오늘</div><div class="v" id="side-date"></div><div class="d" id="side-day"></div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="pg-t" id="pg-title">오늘 현황</div>
+    <div class="tb-r">
+      <span class="tb-st" id="tb-st">로딩 중...</span>
+      <button class="tb-btn" onclick="loadAll()">↻ 새로고침</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="home"  class="sec on"><div class="load-box"><div class="sp-lg"></div><div class="load-t">데이터 불러오는 중...</div></div></div>
+    <div id="now"   class="sec"><div class="load-box"><div class="sp-lg"></div><div class="load-t">NOW 구독자 로딩 중...</div></div></div>
+    <div id="prime" class="sec"><div class="load-box"><div class="sp-lg"></div><div class="load-t">Prime 구독자 로딩 중...</div></div></div>
+    <div id="ad"    class="sec"><div class="load-box"><div class="sp-lg"></div><div class="load-t">광고센터 로딩 중...</div></div></div>
+    <div id="log"   class="sec"><div class="load-box"><div class="sp-lg"></div><div class="load-t">업무일지 로딩 중...</div></div></div>
+  </div>
+</div>
+
+<script>
+const SID = {
+  now:   '1dRwKy7yWxbpqUUeMykWcF5zlHXzV9OzTpmbGIM0eq-c',
+  prime: '1QZaayfjaw1orIojZwtQ1ewV2HPjbPV6tVYDIvY7fizI',
+  ad:    '1hCJN9YoSBKu8FDeMHzBvoj31f2DYjsqXGVTtanaH2U0',
+  log:   '1IBCkmzGkG7IRMxoTdHdcp4x72Rv4H85oHguWiGVJvrI'
+};
+const TAB  = { mtg:'영업미팅일지', goal:'월간목표수익', sub:'일별현황', log:'업무일지' };
+const pages = {home:'오늘 현황',now:'NOW 구독자',prime:'Prime 구독자',ad:'광고센터 KPI',log:'업무일지·회의록'};
+const DAYS  = ['일','월','화','수','목','금','토'];
+const TODAY = new Date();
+
+document.getElementById('side-date').textContent = (TODAY.getMonth()+1)+'/'+(TODAY.getDate());
+document.getElementById('side-day').textContent  = DAYS[TODAY.getDay()]+'요일';
+
+function nav(el,id){
+  document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.getElementById('pg-title').textContent=pages[id];
+}
+
+// ─── 캐시 없이 매번 새로 fetch ───
+async function fetchSheet(sid, tab){
+  // cache: no-store 로 항상 최신 데이터 가져옴
+  const url = `https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}&t=${Date.now()}`;
+  const res  = await fetch(url, {cache:'no-store'});
+  const text = await res.text();
+  const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+  if(!match) throw new Error('응답 파싱 실패');
+  const json = JSON.parse(match[1]);
+  return json.table.rows.map(r => r.c.map(c => c ? c.v : null));
+}
+
+// ════════════════════════════════════════
+//  날짜 파싱 — 여러 형식 지원
+//  2026-05-28 / 2026.05.28 / 2026/05/28 / Date(2026,4,28) / 숫자
+// ════════════════════════════════════════
+function parseDate(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  // Date(2026,4,28) 형식
+  const m1 = s.match(/Date\((\d+),(\d+),(\d+)\)/);
+  if(m1) return `${m1[1]}-${String(Number(m1[2])+1).padStart(2,'0')}-${String(m1[3]).padStart(2,'0')}`;
+  // 2026.05.28 또는 2026/05/28 형식 → 하이픈으로 통일
+  const m2 = s.match(/^(\d{4})[./](\d{1,2})[./](\d{1,2})$/);
+  if(m2) return `${m2[1]}-${m2[2].padStart(2,'0')}-${m2[3].padStart(2,'0')}`;
+  // 이미 2026-05-28 형식
+  if(s.match(/^\d{4}-\d{2}-\d{2}$/)) return s;
+  // 숫자(엑셀 시리얼)
+  if(typeof v === 'number'){
+    const d = new Date((v-25569)*86400*1000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  return s;
+}
+
+const fmt    = n => (!n&&n!==0)?'-':Number(n).toLocaleString();
+const fmtM   = n => { if(!n&&n!==0)return '-'; n=Number(n); if(n>=100000000)return (n/100000000).toFixed(1)+'억'; if(n>=10000)return Math.round(n/10000)+'만'; return n.toLocaleString(); };
+const fmtD   = n => { if(!n&&n!==0)return '-'; return (n>0?'▲ +':'▼ ')+Number(n).toLocaleString(); };
+const fmtPct = n => { if(!n&&n!==0)return '-'; return Math.round(Number(n)*100)+'%'; };
+const clamp  = v => Math.min(Math.max(Number(v)||0,0),100);
+const pct    = (a,b) => !b?0:Math.round(a/b*100);
+const colorUp= v => Number(v)>=0?'up':'dn';
+const badge  = v => { const m={'계약완료':'b-done','협의중':'b-prog','대기':'b-pend','불발':'b-miss','취소':'b-canc'}; return `<span class="badge ${m[v]||'b-pend'}">${v||'-'}</span>`; };
+const adBadge= v => { if(!v)return ''; return `<span class="badge ${v==='방송'?'b-bc':'b-dg'}">${v}</span>`; };
+const safeStr= v => (v===null||v===undefined)?'':String(v);
+// 광고 달성률 색상: 100% 이상=초록, 80~100%=주황, 80% 미만=빨강
+const adRateColor = r => (r>=1)?'var(--up)':(r>=0.8)?'#f59e0b':'var(--dn)';
+const adRateBg    = r => (r>=1)?'f-g':(r>=0.8)?'f-w':'f-r';
+
+let nowData=[], primeData=[], adMtgData=[], adGoalData=[], logData=[];
+let logFilter='전체';
+
+const charts={};
+function mkChart(id,type,labels,datasets,opts={}){
+  const el=document.getElementById(id); if(!el)return;
+  if(charts[id])charts[id].destroy();
+  const gc='rgba(0,0,0,0.05)',tc='#aaa';
+  charts[id]=new Chart(el,{type,data:{labels,datasets},options:{responsive:true,plugins:{legend:{display:!!opts.legend,labels:{color:tc,font:{size:11}}}},scales:{x:{ticks:{color:tc,font:{size:10}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:10},callback:opts.yFmt||(v=>v)},grid:{color:gc}}}}});
+}
+
+async function loadNow(){
+  const rows=await fetchSheet(SID.now,TAB.sub);
+  nowData=rows.slice(1).filter(r=>r[1]!=null).map(r=>({
+    date:parseDate(r[0]),total:Number(r[1])||0,delta:Number(r[2])||0,
+    newSub:Number(r[3])||0,cancel:Number(r[4])||0,goal:Number(r[5])||0,note:safeStr(r[6])
+  })).sort((a,b)=>a.date>b.date?1:-1);
+}
+
+async function loadPrime(){
+  const rows=await fetchSheet(SID.prime,TAB.sub);
+  primeData=rows.slice(1).filter(r=>r[1]!=null).map(r=>({
+    date:parseDate(r[0]),total:Number(r[1])||0,delta:Number(r[2])||0,
+    newSub:Number(r[3])||0,cancel:Number(r[4])||0,goal:Number(r[5])||0,note:safeStr(r[7])
+  })).sort((a,b)=>a.date>b.date?1:-1);
+}
+
+// ════════════════════════════════════════
+//  광고센터 로드 — 컬럼 이름으로 자동 매핑
+// ════════════════════════════════════════
+async function loadAd(){
+  const [mtgText, goalText] = await Promise.all([
+    fetch(`https://docs.google.com/spreadsheets/d/${SID.ad}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(TAB.mtg)}&t=${Date.now()}`, {cache:'no-store'}).then(r=>r.text()),
+    fetch(`https://docs.google.com/spreadsheets/d/${SID.ad}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(TAB.goal)}&t=${Date.now()}`, {cache:'no-store'}).then(r=>r.text())
+  ]);
+
+  // ── 탭1: 영업미팅일지 ──
+  const mtgJson  = JSON.parse(mtgText.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  const mtgTable = mtgJson.table;
+  const mc = {};
+  mtgTable.cols.forEach((c,i) => { if(c.label.trim()) mc[c.label.trim()] = i; });
+
+  const mi = {
+    date:   mc['날짜']          ?? 0,
+    co:     mc['업체명']         ?? 1,
+    mgr:    mc['담당자']         ?? 2,
+    sum:    mc['미팅 내용 요약'] ?? mc['미팅내용요약'] ?? 3,
+    result: mc['결과']           ?? 4,
+    adType: mc['광고구분']       ?? 5,
+    amount: mc['계약금액']       ?? 6,
+    next:   mc['다음 액션']      ?? mc['다음액션'] ?? 7,
+    ndate:  mc['후속 일정']      ?? mc['후속일정'] ?? 8,
+  };
+
+  adMtgData = mtgTable.rows
+    .filter(r => r.c[mi.co]?.v != null || r.c[mi.date]?.v != null)
+    .map(r => ({
+      date:       parseDate(r.c[mi.date]?.v),
+      company:    safeStr(r.c[mi.co]?.v),
+      manager:    safeStr(r.c[mi.mgr]?.v),
+      summary:    safeStr(r.c[mi.sum]?.v),
+      result:     safeStr(r.c[mi.result]?.v),
+      adType:     safeStr(r.c[mi.adType]?.v),
+      amount:     Number(r.c[mi.amount]?.v)||0,
+      nextAction: safeStr(r.c[mi.next]?.v),
+      nextDate:   parseDate(r.c[mi.ndate]?.v),
+    }))
+    .filter(r => r.company || r.date)
+    .sort((a,b) => a.date > b.date ? -1 : 1);
+
+  // ── 탭2: 월간목표수익 ──
+  const goalJson  = JSON.parse(goalText.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  const goalTable = goalJson.table;
+  const gc = {};
+  goalTable.cols.forEach((c,i) => { if(c.label.trim()) gc[c.label.trim()] = i; });
+
+  const gi = {
+    ym:          gc['연월']            ?? 0,
+    bcTarget:    gc['방송목표']         ?? 1,
+    bcActual:    gc['방송실적']         ?? 2,
+    bcRate:      gc['방송달성률']       ?? 3,
+    bcMoM:       gc['방송전월비']       ?? 4,
+    dgTarget:    gc['디지털목표']       ?? 5,
+    dgActual:    gc['디지털실적']       ?? 6,
+    dgRate:      gc['디지털달성률']     ?? 7,
+    dgMoM:       gc['디지털전월비']     ?? 8,
+    totTarget:   gc['총목표']           ?? 9,
+    totActual:   gc['총실적']           ?? 10,
+    totRate:     gc['총달성률']         ?? 11,
+    annualTarget:gc['연간목표']         ?? 12,
+    bcCum:       gc['방송누계실적']     ?? 13,
+    dgCum:       gc['디지털누계실적']   ?? 14,
+    annualRate:  gc['연간달성률']       ?? 15,
+  };
+
+  // Date(2026,0,1) → "2026-01" 변환
+  function parseYM(v){
+    if(!v) return "";
+    // 이미 JS Date 객체인 경우
+    if(v instanceof Date) {
+      return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,"0")}`;
+    }
+    const s=String(v);
+    // "Date(2026,4,1)" 문자열 형태
+    const m=s.match(/Date\((\d+),(\d+),/);
+    if(m) return `${m[1]}-${String(Number(m[2])+1).padStart(2,"0")}`;
+    // 이미 "2026-05" 형태
+    if(s.match(/^\d{4}-\d{2}/)) return s.slice(0,7);
+    return s;
+  }
+
+  adGoalData = goalTable.rows
+    .filter(r => r.c[gi.ym]?.v != null)
+    .map(r => ({
+      ym:          parseYM(r.c[gi.ym]?.v),       // "2026-01" 형식
+      bcTarget:    Number(r.c[gi.bcTarget]?.v)||0,
+      bcActual:    Number(r.c[gi.bcActual]?.v)||0,
+      bcRate:      Number(r.c[gi.bcRate]?.v)||0,
+      bcMoM:       Number(r.c[gi.bcMoM]?.v)||0,
+      dgTarget:    Number(r.c[gi.dgTarget]?.v)||0,
+      dgActual:    Number(r.c[gi.dgActual]?.v)||0,
+      dgRate:      Number(r.c[gi.dgRate]?.v)||0,
+      dgMoM:       Number(r.c[gi.dgMoM]?.v)||0,
+      totTarget:   Number(r.c[gi.totTarget]?.v)||0,
+      totActual:   Number(r.c[gi.totActual]?.v)||0,
+      totRate:     Number(r.c[gi.totRate]?.v)||0,
+      annualTarget:Number(r.c[gi.annualTarget]?.v)||0,
+      bcCum:       Number(r.c[gi.bcCum]?.v)||0,
+      dgCum:       Number(r.c[gi.dgCum]?.v)||0,
+      annualRate:  Number(r.c[gi.annualRate]?.v)||0,
+    }))
+    .filter(r => r.ym !== '')          // 빈 행 제거
+    .sort((a,b) => a.ym > b.ym ? 1 : -1);  // 1월 → 12월 오름차순
+  console.log('📊 adGoalData yms:', adGoalData.map(r=>r.ym));
+  console.log('📅 TODAY ym:', TODAY.getFullYear()+'-'+String(TODAY.getMonth()+1).padStart(2,'0'));
+}
+
+// ════════════════════════════════════════
+//  업무일지 로드 — 컬럼 이름으로 자동 매핑
+// ════════════════════════════════════════
+async function loadLog(){
+  const url = `https://docs.google.com/spreadsheets/d/${SID.log}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(TAB.log)}&t=${Date.now()}`;
+  const res  = await fetch(url, {cache:'no-store'});
+  const text = await res.text();
+  const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+  if(!match) throw new Error('업무일지 응답 파싱 실패');
+  const json  = JSON.parse(match[1]);
+  const table = json.table;
+
+  // 컬럼 라벨로 인덱스 자동 감지
+  const colMap = {};
+  table.cols.forEach((c,i) => { colMap[c.label.trim()] = i; });
+
+  const iDate    = colMap['날짜']    ?? 0;
+  const iDept    = colMap['부서']    ?? 1;
+  const iType    = colMap['종류']    ?? 2;
+  const iTitle   = colMap['제목']    ?? 3;
+  const iBody    = colMap['내용']    ?? 4;
+  const iSummary = colMap['AI 요약'] ?? colMap['AI요약'] ?? colMap['요약'] ?? 5;
+
+  logData = table.rows
+    .filter(r => r.c[iTitle] && safeStr(r.c[iTitle].v).trim() !== '')
+    .map(r => ({
+      date:    parseDate(r.c[iDate]?.v),
+      dept:    safeStr(r.c[iDept]?.v),
+      type:    safeStr(r.c[iType]?.v),
+      title:   safeStr(r.c[iTitle]?.v),
+      body:    safeStr(r.c[iBody]?.v),
+      summary: safeStr(r.c[iSummary]?.v),
+    }))
+    .sort((a,b) => a.date > b.date ? -1 : 1);
+
+  document.getElementById('log-badge').textContent = logData.length;
+}
+
+function renderHome(){
+  const nL=nowData[nowData.length-1]||{},pL=primeData[primeData.length-1]||{};
+  const mo=String(TODAY.getMonth()+1).padStart(2,'0'),ym=TODAY.getFullYear()+'-'+mo;
+
+  // 이달 데이터 찾기 — trim으로 공백 제거 후 비교
+  const cur = adGoalData.find(r=>r.ym.trim()===ym.trim()) || adGoalData[adGoalData.length-1] || {};
+  const curYm = cur.ym || ym;
+  console.log('🎯 cur:', cur.ym, 'bcRate:', cur.bcRate, 'dgRate:', cur.dgRate, 'totRate:', cur.totRate);
+
+  const nInc=nowData.filter(r=>r.date?.startsWith(ym)).reduce((s,r)=>s+r.delta,0);
+  const pInc=primeData.filter(r=>r.date?.startsWith(ym)).reduce((s,r)=>s+r.delta,0);
+  const recentDone=adMtgData.filter(r=>r.result==='계약완료').slice(0,2);
+  const alerts=[];
+  if(cur.totRate&&cur.totRate<0.7)alerts.push({t:'al-w',m:`<strong>광고 월간 달성률 ${fmtPct(cur.totRate)}</strong> — 목표 대비 저조`});
+  recentDone.forEach(r=>alerts.push({t:'al-g',m:`<strong>${r.company}</strong> ${r.adType?`[${r.adType}] `:''}계약 완료 — ${fmtM(r.amount)}`}));
+  if(nL.delta>0)alerts.push({t:'al-i',m:`<strong>NOW</strong> 전일 대비 +${fmt(nL.delta)}명 증가`});
+  const chart14=nowData.slice(-14);
+  document.getElementById('home').innerHTML=`
+    ${alerts.length?`<div class="alerts">${alerts.map(a=>`<div class="alert ${a.t}">${a.m}<span class="al-tm">최신</span></div>`).join('')}</div>`:''}
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-l">NOW 구독자</div><div class="kpi-v">${fmt(nL.total)}</div><div class="kpi-d ${colorUp(nL.delta)}">${fmtD(nL.delta)} 어제</div><div class="kpi-bar"><div class="kpi-fill f-ac" style="width:${clamp(pct(nInc,nL.goal))}%"></div></div></div>
+      <div class="kpi"><div class="kpi-l">Prime 구독자</div><div class="kpi-v">${fmt(pL.total)}</div><div class="kpi-d ${colorUp(pL.delta)}">${fmtD(pL.delta)} 어제</div><div class="kpi-bar"><div class="kpi-fill f-g" style="width:${clamp(pct(pInc,pL.goal))}%"></div></div></div>
+      <div class="kpi"><div class="kpi-l">이달 광고 달성률</div><div class="kpi-v" style="color:${adRateColor(cur.totRate||0)}">${cur.totRate?fmtPct(cur.totRate):'-'}</div><div class="kpi-d" style="color:${adRateColor(cur.totRate||0)}">${fmtM(cur.totActual)} / 목표 ${fmtM(cur.totTarget)}</div><div class="kpi-bar"><div class="kpi-fill ${adRateBg(cur.totRate||0)}" style="width:${clamp(pct(cur.totActual,cur.totTarget))}%"></div></div></div>
+      <div class="kpi"><div class="kpi-l">연간 누계 달성률</div><div class="kpi-v" style="color:${adRateColor(cur.annualRate||0)}">${cur.annualRate?fmtPct(cur.annualRate):'-'}</div><div class="kpi-d" style="color:${adRateColor(cur.annualRate||0)}">${fmtM((cur.bcCum||0)+(cur.dgCum||0))} / ${fmtM(cur.annualTarget)}</div><div class="kpi-bar"><div class="kpi-fill f-ac" style="width:${clamp(pct((cur.bcCum||0)+(cur.dgCum||0),cur.annualTarget))}%"></div></div></div>
+    </div>
+    <div class="two-col">
+      <div class="card"><div class="card-hd"><span class="card-t">NOW 구독자 일별 변동 — 최근 14일</span></div><canvas id="homeChart" height="110"></canvas></div>
+      <div class="card"><div class="card-hd"><span class="card-t">최근 영업 미팅</span></div>
+        <div class="mtg-list">${adMtgData.slice(0,5).map(r=>`<div class="mtg-row"><span class="mtg-co">${r.company}</span><span class="mtg-desc">${r.summary}</span>${r.adType?adBadge(r.adType):''}${badge(r.result)}</div>`).join('')||'<div style="color:var(--mt);font-size:12px;padding:10px 0">데이터 없음</div>'}</div>
+      </div>
+    </div>
+    <div class="ad-split">
+      <div class="split-card bc-card"><div class="split-title" style="color:var(--bc)">📺 방송 광고 · ${curYm}</div><div class="split-kpi-row"><div class="sk"><div class="sk-l">목표</div><div class="sk-v">${fmtM(cur.bcTarget)}</div></div><div class="sk"><div class="sk-l">현재 실적</div><div class="sk-v">${fmtM(cur.bcActual)}</div></div><div class="sk"><div class="sk-l">달성률</div><div class="sk-v" style="color:${adRateColor(cur.bcRate||0)}">${fmtPct(cur.bcRate)}</div></div></div><div class="prog-bar-sm" style="margin-top:10px"><div class="prog-fill-sm ${adRateBg(cur.bcRate||0)}" style="width:${clamp(pct(cur.bcActual,cur.bcTarget))}%"></div></div></div>
+      <div class="split-card dg-card"><div class="split-title" style="color:var(--dg)">💻 디지털 광고 · ${curYm}</div><div class="split-kpi-row"><div class="sk"><div class="sk-l">목표</div><div class="sk-v">${fmtM(cur.dgTarget)}</div></div><div class="sk"><div class="sk-l">현재 실적</div><div class="sk-v">${fmtM(cur.dgActual)}</div></div><div class="sk"><div class="sk-l">달성률</div><div class="sk-v" style="color:${adRateColor(cur.dgRate||0)}">${fmtPct(cur.dgRate)}</div></div></div><div class="prog-bar-sm" style="margin-top:10px"><div class="prog-fill-sm ${adRateBg(cur.dgRate||0)}" style="width:${clamp(pct(cur.dgActual,cur.dgTarget))}%"></div></div></div>
+    </div>`;
+  setTimeout(()=>{mkChart('homeChart','bar',chart14.map(r=>r.date.slice(5)),[{data:chart14.map(r=>r.delta),backgroundColor:chart14.map(r=>r.delta>=0?'#6C5CE7bb':'#fee2e2'),borderRadius:3}]);},50);
+}
+
+function renderNow(){
+  const last=nowData[nowData.length-1]||{},r14=nowData.slice(-14);
+  document.getElementById('now').innerHTML=`
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-l">총 구독자</div><div class="kpi-v">${fmt(last.total)}</div><div class="kpi-d ${colorUp(last.delta)}">${fmtD(last.delta)} 어제</div></div>
+      <div class="kpi"><div class="kpi-l">어제 신규</div><div class="kpi-v">${fmt(last.newSub)}</div><div class="kpi-d up">가입</div></div>
+      <div class="kpi"><div class="kpi-l">어제 해지</div><div class="kpi-v">${fmt(last.cancel)}</div><div class="kpi-d dn">해지</div></div>
+      <div class="kpi"><div class="kpi-l">최신 기록일</div><div class="kpi-v" style="font-size:15px">${last.date||'-'}</div></div>
+    </div>
+    <div class="sub-grid">
+      <div class="card"><div class="card-hd"><span class="card-t">일별 증감</span></div><canvas id="nowDelta" height="150"></canvas></div>
+      <div class="card"><div class="card-hd"><span class="card-t">총 구독자 추이</span></div><canvas id="nowTotal" height="150"></canvas></div>
+    </div>
+    <div class="card"><div class="card-hd"><span class="card-t">최근 ${r14.length}일 상세</span></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th class="td-r">총 구독자</th><th class="td-r">증감</th><th class="td-r">신규</th><th class="td-r">해지</th><th>비고</th></tr></thead>
+      <tbody>${[...r14].reverse().map(r=>`<tr><td style="color:#185FA5">${r.date}</td><td class="td-r" style="font-weight:600">${fmt(r.total)}</td><td class="td-r" style="color:${r.delta>=0?'var(--up)':'var(--dn)'};font-weight:600">${r.delta>0?'+':''}${fmt(r.delta)}</td><td class="td-r">${fmt(r.newSub)}</td><td class="td-r">${fmt(r.cancel)}</td><td style="color:var(--mt)">${r.note}</td></tr>`).join('')}</tbody></table></div>
+    </div>`;
+  setTimeout(()=>{const lb=r14.map(r=>r.date.slice(5));mkChart('nowDelta','bar',lb,[{data:r14.map(r=>r.delta),backgroundColor:r14.map(r=>r.delta>=0?'#6C5CE7bb':'#fee2e2'),borderRadius:3}]);mkChart('nowTotal','bar',lb,[{data:r14.map(r=>r.total),backgroundColor:'#6C5CE766',borderRadius:3}]);},50);
+}
+
+function renderPrime(){
+  const last=primeData[primeData.length-1]||{},r14=primeData.slice(-14);
+  document.getElementById('prime').innerHTML=`
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-l">Prime 총 구독자</div><div class="kpi-v">${fmt(last.total)}</div><div class="kpi-d ${colorUp(last.delta)}">${fmtD(last.delta)} 어제</div></div>
+      <div class="kpi"><div class="kpi-l">어제 신규</div><div class="kpi-v">${fmt(last.newSub)}</div><div class="kpi-d up">가입</div></div>
+      <div class="kpi"><div class="kpi-l">어제 해지</div><div class="kpi-v">${fmt(last.cancel)}</div><div class="kpi-d dn">해지</div></div>
+      <div class="kpi"><div class="kpi-l">최신 기록일</div><div class="kpi-v" style="font-size:15px">${last.date||'-'}</div></div>
+    </div>
+    <div class="sub-grid">
+      <div class="card"><div class="card-hd"><span class="card-t">일별 증감</span></div><canvas id="primeDelta" height="150"></canvas></div>
+      <div class="card"><div class="card-hd"><span class="card-t">총 구독자 추이</span></div><canvas id="primeTotal" height="150"></canvas></div>
+    </div>
+    <div class="card"><div class="card-hd"><span class="card-t">최근 ${r14.length}일 상세</span></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th class="td-r">총 구독자</th><th class="td-r">증감</th><th class="td-r">신규</th><th class="td-r">해지</th><th>비고</th></tr></thead>
+      <tbody>${[...r14].reverse().map(r=>`<tr><td style="color:#185FA5">${r.date}</td><td class="td-r" style="font-weight:600">${fmt(r.total)}</td><td class="td-r" style="color:${r.delta>=0?'var(--up)':'var(--dn)'};font-weight:600">${r.delta>0?'+':''}${fmt(r.delta)}</td><td class="td-r">${fmt(r.newSub)}</td><td class="td-r">${fmt(r.cancel)}</td><td style="color:var(--mt)">${r.note}</td></tr>`).join('')}</tbody></table></div>
+    </div>`;
+  setTimeout(()=>{const lb=r14.map(r=>r.date.slice(5));mkChart('primeDelta','bar',lb,[{data:r14.map(r=>r.delta),backgroundColor:r14.map(r=>r.delta>=0?'#0F6E56bb':'#fee2e2'),borderRadius:3}]);mkChart('primeTotal','bar',lb,[{data:r14.map(r=>r.total),backgroundColor:'#0F6E5666',borderRadius:3}]);},50);
+}
+
+function renderAd(){
+  const cur=adGoalData.find(r=>r.ym.trim()===(TODAY.getFullYear()+'-'+String(TODAY.getMonth()+1).padStart(2,'0'))) || adGoalData[adGoalData.length-1]||{},prev5=adGoalData.slice(-5);
+  const bcCum=cur.bcCum||0,dgCum=cur.dgCum||0,cumTotal=bcCum+dgCum;
+  document.getElementById('ad').innerHTML=`
+    <div class="ad-split">
+      <div class="split-card bc-card"><div class="split-title" style="color:var(--bc)">📺 방송 광고 · ${cur.ym||'-'}</div><div class="split-kpi-row"><div class="sk"><div class="sk-l">목표</div><div class="sk-v">${fmtM(cur.bcTarget)}</div></div><div class="sk"><div class="sk-l">실적</div><div class="sk-v">${fmtM(cur.bcActual)}</div></div><div class="sk"><div class="sk-l">달성률</div><div class="sk-v" style="color:${adRateColor(cur.bcRate||0)}">${fmtPct(cur.bcRate)}</div></div></div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mt);margin-top:10px;margin-bottom:3px"><span>전월 대비</span><span style="font-weight:600;color:${(cur.bcMoM||0)>=0?'var(--up)':'var(--dn)'}">${(cur.bcMoM||0)>0?'+':''}${fmtM(cur.bcMoM)}</span></div><div class="prog-bar-sm"><div class="prog-fill-sm ${adRateBg(cur.bcRate||0)}" style="width:${clamp(pct(cur.bcActual,cur.bcTarget))}%"></div></div></div>
+      <div class="split-card dg-card"><div class="split-title" style="color:var(--dg)">💻 디지털 광고 · ${cur.ym||'-'}</div><div class="split-kpi-row"><div class="sk"><div class="sk-l">목표</div><div class="sk-v">${fmtM(cur.dgTarget)}</div></div><div class="sk"><div class="sk-l">실적</div><div class="sk-v">${fmtM(cur.dgActual)}</div></div><div class="sk"><div class="sk-l">달성률</div><div class="sk-v" style="color:${adRateColor(cur.dgRate||0)}">${fmtPct(cur.dgRate)}</div></div></div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mt);margin-top:10px;margin-bottom:3px"><span>전월 대비</span><span style="font-weight:600;color:${(cur.dgMoM||0)>=0?'var(--up)':'var(--dn)'}">${(cur.dgMoM||0)>0?'+':''}${fmtM(cur.dgMoM)}</span></div><div class="prog-bar-sm"><div class="prog-fill-sm ${adRateBg(cur.dgRate||0)}" style="width:${clamp(pct(cur.dgActual,cur.dgTarget))}%"></div></div></div>
+    </div>
+    <div class="cum-card"><div class="card-hd"><span class="card-t">📊 연간 누계 달성 현황</span></div>
+      <div class="cum-row">
+        <div class="ck"><div class="ck-l">연간 목표</div><div class="ck-v">${fmtM(cur.annualTarget)}</div></div>
+        <div class="ck"><div class="ck-l">방송 누계실적</div><div class="ck-v" style="color:var(--bc)">${fmtM(bcCum)}</div></div>
+        <div class="ck"><div class="ck-l">디지털 누계실적</div><div class="ck-v" style="color:var(--dg)">${fmtM(dgCum)}</div></div>
+        <div class="ck"><div class="ck-l">연간 달성률</div><div class="ck-v" style="color:${adRateColor(cur.annualRate||0)}">${fmtPct(cur.annualRate)}</div><div class="ck-s">${fmtM(cumTotal)} 달성</div></div>
+      </div>
+      <div class="prog-wrap"><div class="prog-label"><span style="font-size:11px;color:var(--mt)">연간 진행률</span><span style="font-size:11px;font-weight:600">${fmtM(cumTotal)} / ${fmtM(cur.annualTarget)}</span></div>
+        <div class="prog-bar"><div class="prog-fill f-bc" style="width:${clamp(pct(bcCum,cur.annualTarget))}%;border-radius:4px 0 0 4px"></div><div class="prog-fill f-dg" style="width:${clamp(pct(dgCum,cur.annualTarget))}%;border-radius:0 4px 4px 0"></div></div>
+        <div style="display:flex;gap:14px;margin-top:7px;font-size:10px;color:var(--mt)"><span><span style="display:inline-block;width:8px;height:8px;background:var(--bc);border-radius:2px;margin-right:4px"></span>방송 ${fmtM(bcCum)}</span><span><span style="display:inline-block;width:8px;height:8px;background:var(--dg);border-radius:2px;margin-right:4px"></span>디지털 ${fmtM(dgCum)}</span></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-hd"><span class="card-t">방송 vs 디지털 — 월별 실적</span></div><canvas id="adChart" height="130"></canvas></div>
+    <div class="card"><div class="card-hd"><span class="card-t">월간 목표·실적 상세</span></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>연월</th><th class="td-r" style="color:var(--bc)">방송목표</th><th class="td-r" style="color:var(--bc)">방송실적</th><th class="td-r" style="color:var(--bc)">달성률</th><th class="td-r" style="color:var(--dg)">디지털목표</th><th class="td-r" style="color:var(--dg)">디지털실적</th><th class="td-r" style="color:var(--dg)">달성률</th><th class="td-r">소계목표</th><th class="td-r">소계실적</th><th class="td-r">달성률</th></tr></thead>
+      <tbody>${[...adGoalData].reverse().map(r=>`<tr><td style="color:#185FA5;font-weight:500">${r.ym}</td><td class="td-r">${fmtM(r.bcTarget)}</td><td class="td-r" style="font-weight:600">${fmtM(r.bcActual)}</td><td class="td-r" style="font-weight:600;color:${adRateColor(r.bcRate||0)}">${fmtPct(r.bcRate)}</td><td class="td-r">${fmtM(r.dgTarget)}</td><td class="td-r" style="font-weight:600">${fmtM(r.dgActual)}</td><td class="td-r" style="font-weight:600;color:${adRateColor(r.dgRate||0)}">${fmtPct(r.dgRate)}</td><td class="td-r" style="font-weight:600">${fmtM(r.totTarget)}</td><td class="td-r" style="font-weight:700">${fmtM(r.totActual)}</td><td class="td-r" style="font-weight:700;color:${adRateColor(r.totRate||0)}">${fmtPct(r.totRate)}</td></tr>`).join('')||'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--mt)">데이터 없음</td></tr>'}</tbody></table></div>
+    </div>
+    <div class="card"><div class="card-hd"><span class="card-t">영업 미팅 전체 목록</span></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>업체</th><th>담당자</th><th>내용</th><th class="td-c">구분</th><th class="td-c">결과</th><th class="td-r">금액</th><th>후속일정</th></tr></thead>
+      <tbody>${adMtgData.map(r=>`<tr><td style="color:#185FA5;white-space:nowrap">${r.date}</td><td style="font-weight:500">${r.company}</td><td style="color:var(--mt)">${r.manager}</td><td style="color:var(--mt);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.summary}</td><td class="td-c">${adBadge(r.adType)}</td><td class="td-c">${badge(r.result)}</td><td class="td-r" style="font-weight:500">${r.amount?fmtM(r.amount):'-'}</td><td style="color:var(--mt);white-space:nowrap">${r.nextDate||'-'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--mt)">데이터 없음</td></tr>'}</tbody></table></div>
+    </div>`;
+  setTimeout(()=>{mkChart('adChart','bar',prev5.map(r=>r.ym),[{label:'방송 실적',data:prev5.map(r=>r.bcActual/100000000),backgroundColor:'#0F6E56bb',borderRadius:3},{label:'디지털 실적',data:prev5.map(r=>r.dgActual/100000000),backgroundColor:'#185FA5bb',borderRadius:3}],{legend:true,yFmt:v=>v.toFixed(1)+'억'});},50);
+}
+
+// ════════════════════════════════════════
+//  업무일지 렌더
+// ════════════════════════════════════════
+function renderLog(){
+  const depts = ['전체', ...new Set(logData.map(r=>r.dept).filter(Boolean))];
+  const filtered = logFilter==='전체' ? logData : logData.filter(r=>r.dept===logFilter);
+
+  const filterHTML = `
+    <div class="filter-row">
+      <span class="filter-label">부서</span>
+      ${depts.map(d=>`<button class="filter-btn ${d===logFilter?'on':''}" onclick="setFilter('${d}')">${d}</button>`).join('')}
+    </div>`;
+
+  const cardsHTML = filtered.length
+    ? filtered.map((l,i)=>`
+      <div class="log-card">
+        <div class="log-top">
+          <div class="log-meta">
+            ${l.dept?`<span class="log-dept">${l.dept}</span>`:''}
+            ${l.type?`<span class="badge ${l.type==='회의록'?'b-meet':'b-log'}">${l.type}</span>`:''}
+            ${l.date?`<span class="log-date">${l.date}</span>`:''}
+          </div>
+        </div>
+        <div class="log-title" onclick="toggleFull(${i})">${l.title} <span style="font-size:11px;color:var(--ht)">▾</span></div>
+        ${l.summary
+          ? `<div class="sum-box"><div class="sum-box-label">✦ AI 요약</div>${l.summary.replace(/\n/g,'<br>')}</div>`
+          : `<div class="sum-empty">요약 없음 — 시트 G열에 요약을 입력하면 표시됩니다</div>`}
+        <div class="log-full" id="lf-${i}">${l.body}</div>
+        <div class="log-foot">
+          <button class="tog-btn" onclick="toggleFull(${i})">전문 보기 / 닫기</button>
+        </div>
+      </div>`).join('')
+    : `<div class="load-box"><div class="load-t">${logFilter==='전체'?'업무일지 데이터가 없습니다':logFilter+' 업무일지가 없습니다'}</div></div>`;
+
+  document.getElementById('log').innerHTML = filterHTML + cardsHTML;
+}
+
+function toggleFull(i){
+  document.getElementById('lf-'+i).classList.toggle('open');
+}
+function setFilter(dept){
+  logFilter=dept;
+  renderLog();
+}
+
+async function loadAll(){
+  document.getElementById('tb-st').textContent='로딩 중...';
+  ['home','now','prime','ad','log'].forEach(id=>{
+    document.getElementById(id).innerHTML=`<div class="load-box"><div class="sp-lg"></div><div class="load-t">데이터 불러오는 중...</div></div>`;
+  });
+
+  const errs=[];
+
+  // 각 데이터를 순서대로 로드하고 바로 렌더링
+  try{ await loadNow();   } catch(e){ errs.push('NOW: '+e.message); }
+  try{ await loadPrime(); } catch(e){ errs.push('Prime: '+e.message); }
+  try{ await loadAd();    } catch(e){ errs.push('광고센터: '+e.message); }
+  try{ await loadLog();   } catch(e){ errs.push('업무일지: '+e.message); }
+
+  // 모든 데이터 로드 완료 후 렌더링
+  renderHome();
+  renderNow();
+  renderPrime();
+  renderAd();
+  renderLog();  // logData가 채워진 후 실행됨
+
+  const errHTML=errs.length?`<div class="err-box"><strong>⚠ 로드 실패</strong><ul style="margin-top:6px;padding-left:16px">${errs.map(e=>`<li>${e}</li>`).join('')}</ul></div>`:'';
+  if(errHTML) document.getElementById('home').innerHTML=errHTML+document.getElementById('home').innerHTML;
+
+  const t=new Date();
+  document.getElementById('tb-st').textContent=`${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')} 업데이트`;
+}
+loadAll();
+</script>
+</body>
+</html>
